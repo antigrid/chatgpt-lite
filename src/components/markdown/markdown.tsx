@@ -18,7 +18,9 @@ import type { Element, Nodes, Properties, Root } from 'hast'
 import { Check, Copy } from 'lucide-react'
 import ReactMarkdown, { type Components } from 'react-markdown'
 import rehypeHighlight from 'rehype-highlight'
+import rehypeKatex from 'rehype-katex'
 import remarkGfm from 'remark-gfm'
+import remarkMath from 'remark-math'
 import type { PluggableList } from 'unified'
 
 const HIGHLIGHT_LANGUAGE_ALLOWLIST = new Set([
@@ -147,11 +149,34 @@ function rehypeNormalizeCodeLanguage(): (tree: Root) => void {
   }
 }
 
-const remarkPluginList: PluggableList = [remarkGfm]
+const FENCED_CODE_BLOCK_REGEX = /(```[\s\S]*?```)/g
+
+function normalizeLatexDelimiters(markdown: string): string {
+  // Convert LaTeX bracket delimiters to remark-math delimiters outside fenced code blocks.
+  return markdown
+    .split(FENCED_CODE_BLOCK_REGEX)
+    .map((segment, index) => {
+      if (index % 2 === 1) {
+        return segment
+      }
+
+      return segment
+        .replace(/\\\[\s*([\s\S]*?)\s*\\\]/g, (_match, expression: string) => {
+          return `\n$$\n${expression}\n$$\n`
+        })
+        .replace(/\\\(([\s\S]*?)\\\)/g, (_match, expression: string) => {
+          return `$${expression}$`
+        })
+    })
+    .join('')
+}
+
+const remarkPluginList: PluggableList = [remarkGfm, remarkMath]
 
 const rehypePluginList: PluggableList = [
   rehypeNormalizeCodeLanguage,
-  [rehypeHighlight, { detect: false }]
+  [rehypeHighlight, { detect: false }],
+  rehypeKatex
 ]
 
 function extractText(node: React.ReactNode): string {
@@ -426,6 +451,8 @@ export const Markdown = memo(function Markdown({
   children,
   renderLinkAnnotation
 }: MarkdownProps): React.JSX.Element {
+  const normalizedContent = useMemo(() => normalizeLatexDelimiters(children), [children])
+
   const components = useMemo(
     () => createMarkdownComponents(renderLinkAnnotation),
     [renderLinkAnnotation]
@@ -438,7 +465,7 @@ export const Markdown = memo(function Markdown({
         rehypePlugins={rehypePluginList}
         components={components}
       >
-        {children}
+        {normalizedContent}
       </ReactMarkdown>
     </div>
   )
