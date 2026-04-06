@@ -2,6 +2,7 @@ import type { NextRequest } from 'next/server'
 import { MAX_IMAGE_SIZE, SUPPORTED_API_IMAGE_TYPES } from '@/lib/chat-attachment-shared'
 import { isDataUrl, normalizeMediaType, parseBase64DataUrl } from '@/lib/chat-message-part-utils'
 import { AppError } from '@/lib/errors'
+import { type ReasoningEffort } from '@/lib/types'
 import { getModel } from '@/services/ai-provider'
 import { isJsonObject } from '@/types/json'
 import { azure as azureProvider } from '@ai-sdk/azure'
@@ -46,6 +47,7 @@ type ProviderStreamPlan = {
 type ProviderStreamInput = {
   modelConfig: ModelConfig
   messages: ModelMessages
+  reasoningEffort: ReasoningEffort
   abortSignal: AbortSignal
 }
 
@@ -279,6 +281,7 @@ function buildWebSearchTools(modelConfig: ModelConfig): ToolSet {
 function createProviderStream({
   modelConfig,
   messages,
+  reasoningEffort,
   abortSignal
 }: ProviderStreamInput): ProviderStreamPlan {
   const baseStreamOptions = createBaseStreamOptions(messages, abortSignal)
@@ -298,14 +301,29 @@ function createProviderStream({
   }
 
   const openaiModelConfig = modelConfig as Extract<ModelConfig, { mode: 'openai' }>
+
+  const openAIReasoningOptions = {
+    providerOptions: {
+      openai: {
+        reasoningEffort
+      }
+    }
+  } as const
+
   return {
     createPrimaryStream: () =>
       streamText({
         model: openaiModelConfig.openaiProvider.responses(openaiModelConfig.openaiModel),
         tools: buildWebSearchTools(openaiModelConfig),
+        ...openAIReasoningOptions,
         ...baseStreamOptions
       }),
-    createFallbackStream,
+    createFallbackStream: () =>
+      streamText({
+        model: openaiModelConfig.openaiProvider.responses(openaiModelConfig.openaiModel),
+        ...openAIReasoningOptions,
+        ...baseStreamOptions
+      }),
     shouldFallbackOnError: isWebSearchSetupFallbackError
   }
 }
@@ -373,6 +391,7 @@ export async function POST(req: NextRequest): Promise<Response> {
     const result = createProviderStream({
       modelConfig: getModel(),
       messages: modelMessages,
+      reasoningEffort: parsed.reasoningEffort,
       abortSignal: req.signal
     })
 

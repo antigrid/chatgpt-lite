@@ -2,6 +2,17 @@ import type { PDFImage } from '@/lib/file-parser'
 import type { JsonValue } from '@/types/json'
 import type { UIMessage, UIMessagePart, UITools } from 'ai'
 
+export const REASONING_EFFORT_VALUES = [
+  'none',
+  'low',
+  'medium',
+  'high',
+  'xhigh'
+] as const
+
+export type ReasoningEffort = (typeof REASONING_EFFORT_VALUES)[number]
+export const DEFAULT_REASONING_EFFORT: ReasoningEffort = 'medium'
+
 export type ChatMessageSource =
   | { type: 'url'; sourceId: string; url: string; title?: string }
   | {
@@ -50,6 +61,7 @@ export interface Chat {
   createdAt: string
   updatedAt: string
   title: string
+  reasoningEffort: ReasoningEffort
   pinned?: boolean
   personaId?: PersonaId
 }

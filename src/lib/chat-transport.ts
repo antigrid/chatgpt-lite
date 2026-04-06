@@ -6,6 +6,7 @@ export function createChatTransport() {
     api: '/api/chat',
     prepareSendMessagesRequest: ({ messages, body, headers }) => {
       const prompt = typeof body?.prompt === 'string' ? body.prompt : ''
+      const reasoningEffort = typeof body?.reasoningEffort === 'string' ? body.reasoningEffort : undefined
 
       return {
         headers: {
@@ -14,6 +15,7 @@ export function createChatTransport() {
         },
         body: {
           prompt,
+          reasoningEffort,
           messages: messages.map(({ role, parts }) => ({ role, parts }))
         }
       }

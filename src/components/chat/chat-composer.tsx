@@ -7,6 +7,7 @@ import { useFileAttachments } from '@/hooks/useFileAttachments'
 import { useInViewport } from '@/hooks/useInViewport'
 import { useVoiceRecognition } from '@/hooks/useVoiceRecognition'
 import { getItem, removeItem, setItem } from '@/lib/client-storage'
+import { REASONING_EFFORT_VALUES, type ReasoningEffort } from '@/lib/types'
 import { CACHE_KEY } from '@/services/constant'
 
 import { ComposerAttachments } from './composer/composer-attachments'
@@ -43,6 +44,8 @@ const ChatComposerComponent = forwardRef<ChatComposerHandle, ChatComposerProps>(
       isSending,
       composerError,
       setComposerError,
+      reasoningEffort,
+      setReasoningEffort,
       onClear,
       onSend,
       onStop
@@ -262,11 +265,17 @@ const ChatComposerComponent = forwardRef<ChatComposerHandle, ChatComposerProps>(
               isSending={isSending}
               canSend={canSend}
               showClear={showClear}
+              reasoningEffort={reasoningEffort}
               isListening={isListening}
               isVoiceButtonInView={isVoiceButtonInView}
               voiceButtonRef={voiceButtonRef}
               fileInputRef={fileInputRef}
               onFileUpload={handleFileUpload}
+              onReasoningEffortChange={(value) => {
+                if ((REASONING_EFFORT_VALUES as readonly string[]).includes(value)) {
+                  setReasoningEffort(value as ReasoningEffort)
+                }
+              }}
               onClear={handleClear}
               onVoiceToggle={toggleVoiceInput}
               onSend={handleSubmit}

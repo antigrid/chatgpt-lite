@@ -2,6 +2,7 @@ import { type RefCallback, type RefObject } from 'react'
 import { AppButton, AppIconButton } from '@/components/common/app-button'
 import { ButtonWithTooltip } from '@/components/common/button-with-tooltip'
 import { ATTACHMENTS_ACCEPT } from '@/lib/chat-attachments'
+import { REASONING_EFFORT_VALUES, type ReasoningEffort } from '@/lib/types'
 import { cn } from '@/lib/utils'
 import { ArrowUp, Mic, MicOff, Paperclip, Square, Trash2 } from 'lucide-react'
 
@@ -10,11 +11,13 @@ interface ComposerToolbarProps {
   isSending: boolean
   canSend: boolean
   showClear: boolean
+  reasoningEffort: ReasoningEffort
   isListening: boolean
   isVoiceButtonInView: boolean
   voiceButtonRef: RefCallback<HTMLButtonElement>
   fileInputRef: RefObject<HTMLInputElement | null>
   onFileUpload: (e: React.ChangeEvent<HTMLInputElement>) => void
+  onReasoningEffortChange: (value: string) => void
   onClear: () => void
   onVoiceToggle: () => void
   onSend: (e: React.SyntheticEvent) => void
@@ -26,11 +29,13 @@ export function ComposerToolbar({
   isSending,
   canSend,
   showClear,
+  reasoningEffort,
   isListening,
   isVoiceButtonInView,
   voiceButtonRef,
   fileInputRef,
   onFileUpload,
+  onReasoningEffortChange,
   onClear,
   onVoiceToggle,
   onSend,
@@ -75,6 +80,22 @@ export function ComposerToolbar({
             </AppButton>
           </ButtonWithTooltip>
         )}
+        <label className="text-muted-foreground ml-1 flex items-center gap-2 text-xs">
+          <span>Reasoning</span>
+          <select
+            value={reasoningEffort}
+            onChange={(event) => onReasoningEffortChange(event.target.value)}
+            disabled={!canInteract || isSending}
+            aria-label="Reasoning effort"
+            className="border-border/70 bg-background text-foreground h-7 rounded-md border px-2 text-xs disabled:opacity-60"
+          >
+            {REASONING_EFFORT_VALUES.map((effort) => (
+              <option key={effort} value={effort}>
+                {effort}
+              </option>
+            ))}
+          </select>
+        </label>
       </div>
       {isSending ? (
         <div className="flex items-center gap-2" role="status" aria-live="polite">

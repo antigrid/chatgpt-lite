@@ -6,7 +6,7 @@ import {
   getChatFallbackTitle
 } from '@/lib/chat-utils'
 import { AppError } from '@/lib/errors'
-import type { Chat, ChatMessage, Persona } from '@/lib/types'
+import { DEFAULT_REASONING_EFFORT, type Chat, type ChatMessage, type Persona, type ReasoningEffort } from '@/lib/types'
 import { CACHE_KEY } from '@/services/constant'
 import { toast } from 'sonner'
 import { create } from 'zustand'
@@ -188,6 +188,7 @@ interface ChatState {
   onDeleteChat: (chat: Chat) => void
   updateChatTitle: (chatId: string, title: string) => void
   updateChatPinned: (chatId: string, pinned: boolean) => void
+  updateChatReasoningEffort: (chatId: string, reasoningEffort: ReasoningEffort) => void
 }
 
 type CommitConversationOptions = RepoCommitConversationOptions & {
@@ -211,6 +212,7 @@ export const selectOpenOrCreateDefaultChat = (s: ChatState) => s.openOrCreateDef
 export const selectOnDeleteChat = (s: ChatState) => s.onDeleteChat
 export const selectUpdateChatTitle = (s: ChatState) => s.updateChatTitle
 export const selectUpdateChatPinned = (s: ChatState) => s.updateChatPinned
+export const selectUpdateChatReasoningEffort = (s: ChatState) => s.updateChatReasoningEffort
 
 export const useChatStore = create<ChatState>()(
   subscribeWithSelector((set, get) => ({
@@ -327,7 +329,8 @@ export const useChatStore = create<ChatState>()(
         const newChat = createChatRecord({
           title: quickTitle,
           personaId: persona.id,
-          personaName: persona.name
+          personaName: persona.name,
+          reasoningEffort: DEFAULT_REASONING_EFFORT
         })
         createdChat = newChat
         return {
@@ -392,6 +395,10 @@ export const useChatStore = create<ChatState>()(
 
     updateChatPinned: (chatId, pinned) => {
       updateChatField(set, chatId, { pinned })
+    },
+
+    updateChatReasoningEffort: (chatId, reasoningEffort) => {
+      updateChatField(set, chatId, { reasoningEffort })
     }
   }))
 )

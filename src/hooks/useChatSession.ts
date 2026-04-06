@@ -19,8 +19,17 @@ import {
   type ChatStreamStatus
 } from '@/lib/chat-utils'
 import { generateId } from '@/lib/id'
-import type { ChatMessage } from '@/lib/types'
-import { selectGetMessagesForChat, selectIsChatHydrated, useChatStore } from '@/store/chat-store'
+import {
+  DEFAULT_REASONING_EFFORT,
+  type ChatMessage,
+  type ReasoningEffort
+} from '@/lib/types'
+import {
+  selectGetMessagesForChat,
+  selectIsChatHydrated,
+  selectUpdateChatReasoningEffort,
+  useChatStore
+} from '@/store/chat-store'
 import { usePersonaStore } from '@/store/persona-store'
 import { useChat, type UseChatHelpers } from '@ai-sdk/react'
 
@@ -37,6 +46,8 @@ interface UseChatSessionReturn {
   streamError: string | null
   composerError: string | null
   setComposerError: Dispatch<SetStateAction<string | null>>
+  reasoningEffort: ReasoningEffort
+  setReasoningEffort: (effort: ReasoningEffort) => void
   handleSend: (payload: ChatComposerPayload) => Promise<boolean>
   handleStop: () => void
   handleClearMessages: () => void
@@ -49,7 +60,11 @@ type ChatSessionError =
 
 type PreparedSendResult =
   | { error: string }
-  | { parts: ReturnType<typeof buildUserMessageParts>; personaPrompt: string }
+  | {
+      parts: ReturnType<typeof buildUserMessageParts>
+      personaPrompt: string
+      reasoningEffort: ReasoningEffort
+    }
 
 type StreamPhaseParams = {
   isLoading: boolean
@@ -227,7 +242,10 @@ async function sendUserMessage({
     commitConversation(chatId, [...messages, userMessage], { updateMeta: true })
 
     await sendMessage(userMessage, {
-      body: { prompt: prepared.personaPrompt }
+      body: {
+        prompt: prepared.personaPrompt,
+        reasoningEffort: prepared.reasoningEffort
+      }
     })
     return true
   } catch (err) {
@@ -243,6 +261,15 @@ async function sendUserMessage({
 export function useChatSession(chatId: string): UseChatSessionReturn {
   const getMessagesForChat = useChatStore(selectGetMessagesForChat)
   const isChatHydrated = useChatStore(selectIsChatHydrated)
+  const updateChatReasoningEffort = useChatStore(selectUpdateChatReasoningEffort)
+  const reasoningEffort = useChatStore(
+    useCallback(
+      (state) =>
+        state.chatList.find((chat) => chat.id === chatId)?.reasoningEffort ??
+        DEFAULT_REASONING_EFFORT,
+      [chatId]
+    )
+  )
 
   const [sessionError, setSessionError] = useState<ChatSessionError | null>(null)
   const [hasPendingToolCall, setHasPendingToolCall] = useState(false)
@@ -388,10 +415,18 @@ export function useChatSession(chatId: string): UseChatSessionReturn {
 
       return {
         parts,
-        personaPrompt
+        personaPrompt,
+        reasoningEffort: chat.reasoningEffort
       }
     },
     [chatId, status]
+  )
+
+  const setReasoningEffort = useCallback(
+    (effort: ReasoningEffort) => {
+      updateChatReasoningEffort(chatId, effort)
+    },
+    [chatId, updateChatReasoningEffort]
   )
 
   const stopStream = useCallback(() => {
@@ -461,6 +496,8 @@ export function useChatSession(chatId: string): UseChatSessionReturn {
     streamError,
     composerError,
     setComposerError,
+    reasoningEffort,
+    setReasoningEffort,
     handleSend,
     handleStop,
     handleClearMessages,

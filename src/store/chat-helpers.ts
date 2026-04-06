@@ -6,12 +6,27 @@ import {
   resolveChatTitle
 } from '@/lib/chat-utils'
 import { generateId } from '@/lib/id'
-import type { Chat, ChatMessage, PersonaId } from '@/lib/types'
+import {
+  DEFAULT_REASONING_EFFORT,
+  REASONING_EFFORT_VALUES,
+  type Chat,
+  type ChatMessage,
+  type PersonaId,
+  type ReasoningEffort
+} from '@/lib/types'
 import { isJsonObject, readJsonString, type JsonValue } from '@/types/json'
 
 const WORD_SPLIT_REGEX = /\s+/
 const BR_TAG_REGEX = /<br\s*\/?>/gi
 const HTML_TAG_REGEX = /<[^>]*>/g
+
+function parseReasoningEffort(value: string | undefined): ReasoningEffort {
+  if (!value) return DEFAULT_REASONING_EFFORT
+  if ((REASONING_EFFORT_VALUES as readonly string[]).includes(value)) {
+    return value as ReasoningEffort
+  }
+  return DEFAULT_REASONING_EFFORT
+}
 
 export function normalizeChatList(list: JsonValue | Chat[]): Chat[] {
   if (!Array.isArray(list)) return []
@@ -30,8 +45,9 @@ export function normalizeChatList(list: JsonValue | Chat[]): Chat[] {
     const updatedAt = readJsonString(chat, 'updatedAt') ?? createdAt
     const pinned = typeof chat.pinned === 'boolean' ? chat.pinned : false
     const personaId = coercePersonaId(readJsonString(chat, 'personaId'))
+    const reasoningEffort = parseReasoningEffort(readJsonString(chat, 'reasoningEffort'))
     const title = resolveChatTitle({ title: readJsonString(chat, 'title'), personaId })
-    result.push({ id: chatId, pinned, createdAt, updatedAt, title, personaId })
+    result.push({ id: chatId, pinned, createdAt, updatedAt, title, personaId, reasoningEffort })
   }
 
   return result
@@ -42,6 +58,7 @@ export type CreateChatRecordArgs = {
   title?: string
   personaId?: PersonaId
   personaName?: string
+  reasoningEffort?: ReasoningEffort
   createdAt?: string
   updatedAt?: string
   pinned?: boolean
@@ -52,6 +69,7 @@ export function createChatRecord({
   title,
   personaId = DefaultPersona.id,
   personaName,
+  reasoningEffort = DEFAULT_REASONING_EFFORT,
   createdAt = new Date().toISOString(),
   updatedAt = createdAt,
   pinned
@@ -60,6 +78,7 @@ export function createChatRecord({
     id,
     title: title || getChatFallbackTitle(personaId, personaName),
     personaId,
+    reasoningEffort,
     createdAt,
     updatedAt
   }

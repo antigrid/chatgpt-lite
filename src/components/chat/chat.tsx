@@ -53,6 +53,8 @@ function ActiveChat({
     streamError,
     composerError,
     setComposerError,
+    reasoningEffort,
+    setReasoningEffort,
     handleSend,
     handleStop,
     handleClearMessages,
@@ -83,6 +85,8 @@ function ActiveChat({
       isSending={isLoading}
       composerError={composerError}
       setComposerError={setComposerError}
+      reasoningEffort={reasoningEffort}
+      setReasoningEffort={setReasoningEffort}
       onClear={handleClearMessages}
       onStop={handleStop}
       onSend={handleSend}

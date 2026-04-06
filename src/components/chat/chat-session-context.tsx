@@ -9,7 +9,7 @@ import {
 } from 'react'
 import { type ChatComposerPayload } from '@/lib/chat-attachments'
 import { type ChatStreamPhase, type ChatStreamStatus } from '@/lib/chat-utils'
-import type { ChatMessage } from '@/lib/types'
+import type { ChatMessage, ReasoningEffort } from '@/lib/types'
 
 type ChatMessagesContextValue = {
   messages: ChatMessage[]
@@ -25,6 +25,8 @@ type ChatComposerContextValue = {
   isSending: boolean
   composerError: string | null
   setComposerError: Dispatch<SetStateAction<string | null>>
+  reasoningEffort: ReasoningEffort
+  setReasoningEffort: (effort: ReasoningEffort) => void
   onClear: () => void
   onSend: (payload: ChatComposerPayload) => Promise<boolean> | boolean
   onStop: () => void
@@ -41,6 +43,8 @@ type ChatSessionProviderProps = {
   isSending: boolean
   composerError: string | null
   setComposerError: Dispatch<SetStateAction<string | null>>
+  reasoningEffort: ReasoningEffort
+  setReasoningEffort: (effort: ReasoningEffort) => void
   onClear: () => void
   onSend: (payload: ChatComposerPayload) => Promise<boolean> | boolean
   onStop: () => void
@@ -69,6 +73,8 @@ export function ChatSessionProvider({
   isSending,
   composerError,
   setComposerError,
+  reasoningEffort,
+  setReasoningEffort,
   onClear,
   onSend,
   onStop,
@@ -92,6 +98,8 @@ export function ChatSessionProvider({
       isSending,
       composerError,
       setComposerError,
+      reasoningEffort,
+      setReasoningEffort,
       onClear,
       onSend,
       onStop
@@ -102,6 +110,8 @@ export function ChatSessionProvider({
       isSending,
       composerError,
       setComposerError,
+      reasoningEffort,
+      setReasoningEffort,
       onClear,
       onSend,
       onStop
